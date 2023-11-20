@@ -1,2 +1,39 @@
 ---
 # tasks file for role_nfs
+
+- name: Install NFS packages
+  ansible.builtin.dnf:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ nfs_packages }}"
+
+- name: Create NFS shared folders
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: nobody
+    group: nobody
+    mode: "{{ item.mode }}"
+  loop: "{{ nfs_exports }}"
+
+- name: Configure NFS exports
+  ansible.builtin.template:
+    src: exports.j2
+    dest: /etc/exports
+
+- name: Check if NFS server service is running
+  ansible.builtin.shell:
+    cmd: systemctl is-active nfs-server
+  register: nfs_status
+  ignore_errors: true
+
+- name: Restart NFS server service
+  ansible.builtin.systemd:
+    name: nfs-server
+    state: restarted
+    enabled: true
+  when: nfs_status.rc != 0
+
+- name: Load shared folders
+  ansible.builtin.command:
+    cmd: exportfs -ra

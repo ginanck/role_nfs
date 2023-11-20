@@ -1,2 +1,11 @@
 ---
 # defaults file for role_nfs
+
+nfs_packages:
+  - nfs-utils
+
+nfs_exports:
+  - path: "/data/folder"
+    clients:
+      - 192.168.1.0/24(rw,sync,root_squash,no_subtree_check)
+      - 10.0.0.0/16(rw,sync,root_squash,no_subtree_check)
